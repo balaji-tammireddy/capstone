@@ -42,7 +42,6 @@ def construct_graph(story, model):
     if not all_chars:
         return None
 
-    # Node features
     node_features = []
     for char in all_chars:
         char_embs = []
@@ -52,7 +51,6 @@ def construct_graph(story, model):
         node_features.append(np.mean(char_embs, axis=0))
     x = torch.tensor(node_features, dtype=torch.float)
 
-    # Edge index (co-occurrence in scenes)
     edges = set()
     for scene in story["scenes"]:
         chars_in_scene = scene["characters"]

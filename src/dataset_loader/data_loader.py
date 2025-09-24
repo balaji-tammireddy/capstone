@@ -4,20 +4,14 @@ import torch
 from transformers import AutoTokenizer
 from collections import Counter
 
-# Paths
 LABEL_PATH = "data/processed/stories_labeled.json"
 OUTPUT_PATH = "data/processed/all_scenes_tensor.pt"
 
-# Model for tokenization
 MODEL_NAME = "bert-base-uncased"
 MAX_LEN = 256
 
-# TP emotions (optional, for prominence bonus)
 TP_EMOTIONS = {"fear", "surprise", "sadness", "anger"}
 
-# -----------------------------
-# Helper functions
-# -----------------------------
 def compute_prominence(sentences, characters, emotions):
     """
     Prominence = frequency of mentions + emotional bonus
@@ -27,7 +21,6 @@ def compute_prominence(sentences, characters, emotions):
     for char in characters:
         counts[char] = text.count(char)
 
-    # Emotional bonus
     emo_bonus = 1 if (set(emotions) & TP_EMOTIONS) else 0
     scores = {c: cnt + emo_bonus for c, cnt in counts.items()}
 
@@ -38,9 +31,6 @@ def compute_prominence(sentences, characters, emotions):
     return {c: round(v / max_score, 3) for c, v in scores.items()}
 
 
-# -----------------------------
-# Main processing
-# -----------------------------
 def main():
     tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
@@ -64,10 +54,8 @@ def main():
             emotions = scene.get("emotions", [])
             tp_label = scene.get("tp_label", 0)
 
-            # Compute prominence (in case missing)
             prominence = scene.get("prominence", compute_prominence(sentences, characters, emotions))
 
-            # Tokenize scene text
             text = " ".join(sentences)
             encoding = tokenizer(
                 text,
@@ -81,18 +69,15 @@ def main():
             all_attention_mask.append(encoding["attention_mask"].squeeze(0))
             all_tp_labels.append(torch.tensor(tp_label, dtype=torch.long))
             all_characters.append(characters)
-            # Convert prominence dict → tensor in character order
             prom_tensor = torch.tensor([prominence.get(c, 0.0) for c in characters], dtype=torch.float) if characters else torch.tensor([])
             all_prominence.append(prom_tensor)
             all_story_ids.append(story["id"])
             all_titles.append(story["title"])
 
-    # Stack tensors
     all_input_ids = torch.stack(all_input_ids)
     all_attention_mask = torch.stack(all_attention_mask)
     all_tp_labels = torch.stack(all_tp_labels)
 
-    # Save as .pt file
     os.makedirs(os.path.dirname(OUTPUT_PATH), exist_ok=True)
     torch.save({
         "input_ids": all_input_ids,
@@ -108,8 +93,5 @@ def main():
     print(f"Total scenes: {len(all_input_ids)}")
 
 
-# -----------------------------
-# Run
-# -----------------------------
 if __name__ == "__main__":
     main()

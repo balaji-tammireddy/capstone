@@ -10,10 +10,8 @@ TP_EMOTIONS = {"fear", "surprise", "sadness", "anger"}
 TP_KEYWORDS = {"but", "suddenly", "however", "tipped", "fell", "cried", "broke", "angry", "hurt"}
 
 def is_turning_point(sentences, emotions):
-    # Check emotion overlap
     emo_match = bool(set(emotions) & TP_EMOTIONS)
 
-    # Check sentence-level keywords
     text = " ".join(sentences).lower()
     keyword_match = any(kw in text for kw in TP_KEYWORDS)
 
@@ -29,7 +27,6 @@ def compute_prominence(sentences, characters, emotions):
     for char in characters:
         counts[char] = text.count(char)
 
-    # Emotional bonus
     emo_bonus = 1 if (set(emotions) & TP_EMOTIONS) else 0
     scores = {c: cnt + emo_bonus for c, cnt in counts.items()}
 
